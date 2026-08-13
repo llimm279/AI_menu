@@ -9,10 +9,26 @@
   </head>
   <body>
     <main class="app">
+      <header class="site-header">
+        <a class="brand" href="#" aria-label="오늘 뭐 먹지 시작 화면">
+          <span class="brand-mark" aria-hidden="true">?</span>
+          <span>뭐먹지</span>
+        </a>
+        <span class="header-badge">오늘의 메뉴 찾기</span>
+      </header>
+
       <section class="screen is-active" id="start-screen" aria-labelledby="start-title">
+        <p class="eyebrow">맛있는 선택을 더 쉽게</p>
         <h1 id="start-title" tabindex="-1">오늘 뭐 먹지?</h1>
         <p>3개의 질문에 답하면 지금 가장 잘 맞는 메뉴를 추천해드릴게요.</p>
         <button class="primary-button" id="start-button" type="button">시작하기</button>
+        <div class="food-preview" aria-hidden="true">
+          <span>🍜</span>
+          <span>🍕</span>
+          <span>🥘</span>
+          <span>🥗</span>
+          <span>🍣</span>
+        </div>
       </section>
 
       <section class="screen" id="hunger-screen" aria-labelledby="hunger-title" hidden>

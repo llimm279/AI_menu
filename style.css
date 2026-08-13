@@ -1,8 +1,21 @@
 :root {
   color-scheme: light;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #222222;
-  background: #fffaf3;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  color: #000000;
+  background: #fbfbf9;
+  --primary: #e60023;
+  --primary-pressed: #cc001f;
+  --ink: #000000;
+  --body: #33332e;
+  --mute: #62625b;
+  --surface: #ffffff;
+  --surface-soft: #fbfbf9;
+  --surface-card: #f6f6f3;
+  --secondary: #e5e5e0;
+  --secondary-pressed: #c8c8c1;
+  --hairline: #dadad3;
+  --focus: #435ee5;
 }
 
 * {
@@ -12,96 +25,197 @@
 body {
   min-height: 100vh;
   margin: 0;
-  display: grid;
-  place-items: center;
   padding: 24px;
+  background:
+    radial-gradient(circle at 8% 12%, #f6f6f3 0 110px, transparent 111px),
+    var(--surface-soft);
 }
 
 .app {
-  width: min(100%, 640px);
+  width: min(100%, 960px);
+  margin: 0 auto;
+}
+
+.site-header {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--primary);
+  font-size: 18px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  color: #ffffff;
+  background: var(--primary);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.header-badge {
+  padding: 10px 16px;
+  border-radius: 9999px;
+  color: var(--body);
+  background: var(--surface-card);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.screen {
+  width: min(100%, 680px);
+  min-height: 440px;
+  margin: 0 auto;
+  padding: clamp(32px, 6vw, 64px);
+  border: 1px solid var(--hairline);
+  border-radius: 32px;
+  background: var(--surface);
   text-align: center;
 }
 
-.screen[hidden] {
-  display: none;
+.screen[hidden],
+[hidden] {
+  display: none !important;
 }
 
 h1,
 h2 {
   margin: 0 0 16px;
-  line-height: 1.15;
+  color: var(--ink);
+  letter-spacing: -1.2px;
 }
 
 h1 {
-  font-size: clamp(2rem, 8vw, 4rem);
+  max-width: 560px;
+  margin-inline: auto;
+  font-size: clamp(2.75rem, 8vw, 4.375rem);
+  font-weight: 600;
+  line-height: 1.05;
 }
 
 h2 {
-  font-size: clamp(1.75rem, 6vw, 2.5rem);
+  font-size: clamp(1.75rem, 5vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.15;
 }
 
 p {
   margin: 0;
-  font-size: clamp(1rem, 3.5vw, 1.25rem);
-  line-height: 1.6;
-  color: #666666;
+  color: var(--body);
+  font-size: 16px;
+  line-height: 1.4;
 }
 
+.eyebrow,
 .step {
-  margin-bottom: 8px;
-  font-size: 0.9rem;
+  margin-bottom: 12px;
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .options {
   display: grid;
   gap: 12px;
-  margin-top: 28px;
+  width: min(100%, 460px);
+  margin: 32px auto 0;
 }
 
 button {
-  min-height: 52px;
+  min-height: 48px;
   padding: 12px 18px;
-  border: 1px solid #cccccc;
-  border-radius: 10px;
-  color: inherit;
-  background: #ffffff;
+  border: 0;
+  border-radius: 16px;
+  color: var(--ink);
+  background: var(--secondary);
   font: inherit;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
 }
 
 button:hover {
-  background: #f5f5f5;
+  background: var(--secondary-pressed);
+  transform: translateY(-1px);
 }
 
-button:focus-visible {
-  outline: 3px solid #222222;
-  outline-offset: 2px;
+button:active {
+  transform: translateY(0);
+}
+
+button:focus-visible,
+a:focus-visible,
+[tabindex="-1"]:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
 }
 
 .primary-button {
-  margin-top: 28px;
-  padding-inline: 28px;
+  margin-top: 32px;
+  padding-inline: 24px;
   color: #ffffff;
-  background: #222222;
-  border-color: #222222;
+  background: var(--primary);
 }
 
 .primary-button:hover {
-  background: #444444;
+  background: var(--primary-pressed);
+}
+
+.food-preview {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: end;
+  gap: 8px;
+  max-width: 500px;
+  margin: 48px auto -24px;
+}
+
+.food-preview span {
+  display: grid;
+  place-items: center;
+  min-height: 104px;
+  border-radius: 16px;
+  background: var(--surface-card);
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+}
+
+.food-preview span:nth-child(2),
+.food-preview span:nth-child(4) {
+  min-height: 136px;
+}
+
+.food-preview span:nth-child(3) {
+  min-height: 160px;
 }
 
 .recommended-menu {
-  margin: 28px 0 12px;
-  color: #222222;
-  font-size: clamp(1.75rem, 6vw, 2.5rem);
+  margin: 32px 0 12px;
+  color: var(--ink);
+  font-size: clamp(2rem, 6vw, 3rem);
   font-weight: 700;
+  letter-spacing: -1.2px;
 }
 
 .result-actions {
   display: flex;
   justify-content: center;
   gap: 12px;
-  margin-top: 28px;
+  margin-top: 32px;
 }
 
 .result-actions .primary-button {
@@ -111,29 +225,76 @@ button:focus-visible {
 .location-note,
 .coordinates,
 .status-message {
-  margin-top: 20px;
-  font-size: 0.9rem;
+  width: min(100%, 440px);
+  margin: 24px auto 0;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--surface-card);
+  color: var(--mute);
+  font-size: 14px;
+}
+
+.coordinates {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
 }
 
 .coordinates p {
+  color: inherit;
   font-size: inherit;
 }
 
 .status-message {
-  color: #222222;
+  color: #103c25;
+  background: #c7f0da;
   font-weight: 600;
 }
 
-@media (max-width: 480px) {
+#location-error-message {
+  color: #9e0a0a;
+}
+
+@media (max-width: 680px) {
   body {
-    padding: 20px;
+    padding: 16px;
+  }
+
+  .site-header {
+    margin-bottom: 24px;
+  }
+
+  .header-badge {
+    display: none;
+  }
+
+  .screen {
+    min-height: 0;
+    padding: 40px 24px;
   }
 
   button {
     width: 100%;
+    min-height: 52px;
   }
 
-  .result-actions {
+  .result-actions,
+  .coordinates {
     flex-direction: column;
+  }
+
+  .food-preview {
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: 40px;
+  }
+
+  .food-preview span:nth-child(n + 4) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
   }
 }
