@@ -203,6 +203,23 @@ a:focus-visible,
   min-height: 160px;
 }
 
+.seo-copy {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid var(--hairline);
+  text-align: left;
+}
+
+.seo-copy h2 {
+  margin-bottom: 16px;
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.seo-copy p + p {
+  margin-top: 12px;
+}
+
 .recommended-menu {
   margin: 32px 0 12px;
   color: var(--ink);

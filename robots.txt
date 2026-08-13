@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ai-menu-3k1j.vercel.app/sitemap.xml
