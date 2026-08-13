@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="내 상황에 맞는 음식 메뉴를 추천하는 웹사이트">
+    <title>오늘 뭐 먹지?</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="app">
+      <section class="screen is-active" id="start-screen" aria-labelledby="start-title">
+        <h1 id="start-title" tabindex="-1">오늘 뭐 먹지?</h1>
+        <p>3개의 질문에 답하면 지금 가장 잘 맞는 메뉴를 추천해드릴게요.</p>
+        <button class="primary-button" id="start-button" type="button">시작하기</button>
+      </section>
+
+      <section class="screen" id="hunger-screen" aria-labelledby="hunger-title" hidden>
+        <p class="step">질문 1 / 3</p>
+        <h2 id="hunger-title" tabindex="-1">지금 얼마나 배고파?</h2>
+        <div class="options">
+          <button type="button" data-answer="hunger" data-value="가볍게 먹고 싶어">가볍게 먹고 싶어</button>
+          <button type="button" data-answer="hunger" data-value="적당히 배고파">적당히 배고파</button>
+          <button type="button" data-answer="hunger" data-value="엄청 배고파">엄청 배고파</button>
+        </div>
+      </section>
+
+      <section class="screen" id="mood-screen" aria-labelledby="mood-title" hidden>
+        <p class="step">질문 2 / 3</p>
+        <h2 id="mood-title" tabindex="-1">오늘 어떤 느낌이 땡겨?</h2>
+        <div class="options">
+          <button type="button" data-answer="mood" data-value="자극적이고 매운 거">🔥 자극적이고 매운 거</button>
+          <button type="button" data-answer="mood" data-value="따뜻하고 든든한 거">🍲 따뜻하고 든든한 거</button>
+          <button type="button" data-answer="mood" data-value="깔끔하고 가벼운 거">🥗 깔끔하고 가벼운 거</button>
+          <button type="button" data-answer="mood" data-value="평소랑 다른 거">✨ 평소랑 다른 거</button>
+        </div>
+      </section>
+
+      <section class="screen" id="budget-screen" aria-labelledby="budget-title" hidden>
+        <p class="step">질문 3 / 3</p>
+        <h2 id="budget-title" tabindex="-1">오늘 식비는?</h2>
+        <div class="options">
+          <button type="button" data-answer="budget" data-value="1만원 이하">💰 1만원 이하</button>
+          <button type="button" data-answer="budget" data-value="1~2만원">💰💰 1~2만원</button>
+          <button type="button" data-answer="budget" data-value="2만원 이상">💰💰💰 2만원 이상</button>
+          <button type="button" data-answer="budget" data-value="가격 상관없어">🤷 가격 상관없어</button>
+        </div>
+      </section>
+
+      <section class="screen" id="result-screen" aria-labelledby="result-title" hidden>
+        <h2 id="result-title" tabindex="-1">오늘의 추천</h2>
+        <div id="recommendation-content">
+          <p class="recommended-menu" id="recommended-menu"></p>
+          <p id="recommendation-reason"></p>
+          <div class="result-actions">
+            <button class="primary-button" id="confirm-button" type="button">이거 먹을래요 👍</button>
+            <button id="recommend-again-button" type="button">다른 메뉴 보여줘 🔄</button>
+          </div>
+        </div>
+
+        <div id="confirmation-content" hidden>
+          <p class="recommended-menu" id="confirmation-message"></p>
+          <div class="result-actions">
+            <button class="primary-button" id="find-nearby-button" type="button">내 주변 음식점 찾기 📍</button>
+            <button id="restart-button" type="button">다시 하기</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="feedback-screen" aria-labelledby="feedback-title" hidden>
+        <h2 id="feedback-title" tabindex="-1">추천이 마음에 들었나요?</h2>
+        <p>더 나은 메뉴 추천을 위해 알려주세요.</p>
+        <div class="options">
+          <button type="button" data-feedback="like">👍 마음에 들어요</button>
+          <button type="button" data-feedback="dislike">👎 별로예요</button>
+        </div>
+      </section>
+
+      <section class="screen" id="location-guide-screen" aria-labelledby="location-guide-title" hidden>
+        <h2 id="location-guide-title" tabindex="-1">근처 맛집을 찾아볼까요?</h2>
+        <p>현재 위치를 사용하면 선택한 메뉴를 판매하는 가까운 음식점을 찾을 수 있어요.</p>
+        <p class="location-note">위치 정보는 현재 주변 음식점을 찾기 위해서만 사용합니다.</p>
+        <button class="primary-button" id="use-location-button" type="button">현재 위치 사용하기</button>
+      </section>
+
+      <section class="screen" id="location-loading-screen" aria-labelledby="location-loading-title" hidden>
+        <h2 id="location-loading-title" tabindex="-1">위치를 확인하고 있어요...</h2>
+        <p>브라우저의 위치 권한 요청을 확인해주세요.</p>
+      </section>
+
+      <section class="screen" id="location-success-screen" aria-labelledby="location-success-title" hidden>
+        <h2 id="location-success-title" tabindex="-1">현재 위치를 확인했어요 📍</h2>
+        <p>이 위치를 기준으로 주변 음식점을 찾을 준비가 됐어요.</p>
+        <!-- 아래 좌표는 개발 중 위치 확인을 위한 표시입니다. -->
+        <div class="coordinates">
+          <p>위도: <span id="latitude-value"></span></p>
+          <p>경도: <span id="longitude-value"></span></p>
+        </div>
+        <button class="primary-button" id="search-restaurants-button" type="button">주변 음식점 검색하기</button>
+        <p class="status-message" id="restaurant-search-message" role="status" hidden></p>
+      </section>
+
+      <section class="screen" id="location-error-screen" aria-labelledby="location-error-title" hidden>
+        <h2 id="location-error-title" tabindex="-1">위치를 확인할 수 없어요.</h2>
+        <p id="location-error-message" role="alert"></p>
+        <button class="primary-button" id="retry-location-button" type="button">다시 시도</button>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
