@@ -262,6 +262,12 @@ a:focus-visible,
   line-height: 1.25;
 }
 
+.restaurant-results .restaurant-disclaimer {
+  margin: -4px 0 16px;
+  color: var(--mute);
+  font-size: 12px;
+}
+
 .restaurant-results ul {
   display: grid;
   gap: 12px;
