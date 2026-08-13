@@ -123,6 +123,10 @@
         </div>
         <button class="primary-button" id="search-restaurants-button" type="button">주변 음식점 검색하기</button>
         <p class="status-message" id="restaurant-search-message" role="status" hidden></p>
+        <div class="restaurant-results" id="restaurant-results" aria-live="polite" hidden>
+          <h3><span id="restaurant-menu-name"></span> 주변 맛집</h3>
+          <ul id="restaurant-list"></ul>
+        </div>
       </section>
 
       <section class="screen" id="location-error-screen" aria-labelledby="location-error-title" hidden>

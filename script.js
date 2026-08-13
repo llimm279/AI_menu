@@ -200,6 +200,8 @@ function resetSession() {
   };
   currentRecommendedMenu = null;
   document.querySelector("#restaurant-search-message").hidden = true;
+  document.querySelector("#restaurant-results").hidden = true;
+  document.querySelector("#restaurant-list").replaceChildren();
 }
 
 function showLocationError(message) {
@@ -256,6 +258,107 @@ function showConfirmedMenu() {
   showScreen("result");
 }
 
+function formatDistance(distanceInMeters) {
+  if (distanceInMeters < 1000) {
+    return `${distanceInMeters}m`;
+  }
+
+  return `${(distanceInMeters / 1000).toFixed(1)}km`;
+}
+
+function renderRestaurants(restaurants) {
+  const results = document.querySelector("#restaurant-results");
+  const list = document.querySelector("#restaurant-list");
+  list.replaceChildren();
+
+  restaurants.forEach((restaurant) => {
+    const item = document.createElement("li");
+    item.className = "restaurant-card";
+
+    const top = document.createElement("div");
+    top.className = "restaurant-card-top";
+
+    const name = document.createElement("h4");
+    name.textContent = restaurant.name;
+
+    const distance = document.createElement("span");
+    distance.className = "restaurant-distance";
+    distance.textContent = formatDistance(restaurant.distance);
+
+    const address = document.createElement("p");
+    address.textContent = restaurant.address || "주소 정보 없음";
+
+    const link = document.createElement("a");
+    link.className = "restaurant-link";
+    link.href = restaurant.placeUrl;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "카카오맵에서 보기 →";
+
+    top.append(name, distance);
+    item.append(top, address);
+
+    if (restaurant.phone) {
+      const phone = document.createElement("p");
+      phone.textContent = restaurant.phone;
+      item.append(phone);
+    }
+
+    item.append(link);
+    list.append(item);
+  });
+
+  document.querySelector("#restaurant-menu-name").textContent = sessionData.selectedMenu;
+  results.hidden = false;
+}
+
+async function searchNearbyRestaurants() {
+  const button = document.querySelector("#search-restaurants-button");
+  const message = document.querySelector("#restaurant-search-message");
+  const { latitude, longitude } = sessionData.location;
+
+  if (latitude === null || longitude === null || !sessionData.selectedMenu) {
+    message.textContent = "위치 또는 메뉴 정보가 없습니다. 처음부터 다시 시도해주세요.";
+    message.hidden = false;
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "주변 음식점을 찾고 있어요...";
+  message.hidden = true;
+  document.querySelector("#restaurant-results").hidden = true;
+
+  const params = new URLSearchParams({
+    menu: sessionData.selectedMenu,
+    latitude: String(latitude),
+    longitude: String(longitude),
+  });
+
+  try {
+    const response = await fetch(`/api/restaurants?${params}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "음식점 검색 요청에 실패했습니다.");
+    }
+
+    if (data.restaurants.length === 0) {
+      message.textContent = "반경 5km 안에서 해당 메뉴를 판매하는 음식점을 찾지 못했어요.";
+      message.hidden = false;
+      return;
+    }
+
+    renderRestaurants(data.restaurants);
+  } catch (error) {
+    console.error("음식점 검색 실패:", error);
+    message.textContent = "음식점 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.";
+    message.hidden = false;
+  } finally {
+    button.disabled = false;
+    button.textContent = "주변 음식점 다시 검색하기";
+  }
+}
+
 document.querySelector("#start-button").addEventListener("click", () => {
   showScreen("hunger");
 });
@@ -298,11 +401,7 @@ document.querySelector("#find-nearby-button").addEventListener("click", () => {
 document.querySelector("#use-location-button").addEventListener("click", requestCurrentLocation);
 document.querySelector("#retry-location-button").addEventListener("click", requestCurrentLocation);
 
-document.querySelector("#search-restaurants-button").addEventListener("click", () => {
-  const message = document.querySelector("#restaurant-search-message");
-  message.textContent = "음식점 검색 기능은 다음 단계에서 추가됩니다.";
-  message.hidden = false;
-});
+document.querySelector("#search-restaurants-button").addEventListener("click", searchNearbyRestaurants);
 
 document.querySelector("#restart-button").addEventListener("click", () => {
   resetSession();
