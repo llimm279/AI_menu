@@ -549,7 +549,6 @@ document.querySelectorAll("[data-feedback-reason]").forEach((button) => {
 document.querySelectorAll("[data-feedback]").forEach((button) => {
   button.addEventListener("click", () => {
     saveFeedback(button.dataset.feedback);
-    showConfirmedMenu();
   });
 });
 
