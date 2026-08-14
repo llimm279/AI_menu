@@ -228,6 +228,9 @@ function displayRecommendation(isReRecommendation = false) {
     menu: currentRecommendedMenu.name,
     score: recommendationScore,
     order: sessionData.recommendationHistory.length + 1,
+    recommendedAt: new Date().toISOString(),
+    feedback: null,
+    feedbackReason: null,
   });
 
   if (!isReRecommendation) {
@@ -377,12 +380,33 @@ function completeFeedback(feedbackReason = null) {
   sessionSavePromise = saveSessionToDatabase();
 }
 
+function rejectRecommendationAndContinue(feedbackReason) {
+  const latestRecommendation = sessionData.recommendationHistory.at(-1);
+
+  if (latestRecommendation) {
+    latestRecommendation.feedback = "dislike";
+    latestRecommendation.feedbackReason = feedbackReason;
+  }
+
+  sessionData.selectedMenu = null;
+  sessionData.feedback = null;
+  sessionData.feedbackReason = null;
+  sessionData.acceptedFirstRecommendation = false;
+  sessionData.reRecommendCount += 1;
+  displayRecommendation(true);
+}
+
 function saveFeedback(feedback) {
   sessionData.feedback = feedback;
 
   if (feedback === "dislike") {
     showScreen("feedbackReason");
     return;
+  }
+
+  const latestRecommendation = sessionData.recommendationHistory.at(-1);
+  if (latestRecommendation) {
+    latestRecommendation.feedback = "like";
   }
 
   completeFeedback();
@@ -542,7 +566,7 @@ document.querySelector("#confirm-button").addEventListener("click", () => {
 
 document.querySelectorAll("[data-feedback-reason]").forEach((button) => {
   button.addEventListener("click", () => {
-    completeFeedback(button.dataset.feedbackReason);
+    rejectRecommendationAndContinue(button.dataset.feedbackReason);
   });
 });
 
