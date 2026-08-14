@@ -48,13 +48,43 @@ const userAnswers = {
   budget: null,
 };
 
-// 추후 Supabase에 한 세션의 기록으로 저장하기 쉬운 형태입니다.
+const RECOMMENDATION_VERSION = "v1";
+
+function createSessionId() {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
+    const randomValue = Math.floor(Math.random() * 16);
+    const value = character === "x" ? randomValue : (randomValue & 0x3) | 0x8;
+    return value.toString(16);
+  });
+}
+
+function getMealPeriod(date = new Date()) {
+  const hour = date.getHours();
+
+  if (hour >= 5 && hour < 10) return "breakfast";
+  if (hour >= 10 && hour < 15) return "lunch";
+  if (hour >= 15 && hour < 21) return "dinner";
+  return "late_night";
+}
+
 const sessionData = {
+  sessionId: createSessionId(),
+  startedAt: new Date().toISOString(),
+  recommendationVersion: RECOMMENDATION_VERSION,
+  mealPeriod: getMealPeriod(),
   answers: userAnswers,
+  recommendationHistory: [],
   firstRecommendedMenu: null,
   selectedMenu: null,
+  acceptedFirstRecommendation: false,
   reRecommendCount: 0,
   feedback: null,
+  feedbackReason: null,
+  completed: false,
   location: {
     latitude: null,
     longitude: null,
@@ -130,6 +160,7 @@ const screens = {
   budget: document.querySelector("#budget-screen"),
   result: document.querySelector("#result-screen"),
   feedback: document.querySelector("#feedback-screen"),
+  feedbackReason: document.querySelector("#feedback-reason-screen"),
   locationGuide: document.querySelector("#location-guide-screen"),
   locationLoading: document.querySelector("#location-loading-screen"),
   locationSuccess: document.querySelector("#location-success-screen"),
@@ -191,6 +222,13 @@ function createRecommendationReason(menu) {
 function displayRecommendation(isReRecommendation = false) {
   const excludedName = currentRecommendedMenu?.name ?? null;
   currentRecommendedMenu = recommendMenu(excludedName);
+  const recommendationScore = calculateMenuScore(currentRecommendedMenu, userAnswers);
+
+  sessionData.recommendationHistory.push({
+    menu: currentRecommendedMenu.name,
+    score: recommendationScore,
+    order: sessionData.recommendationHistory.length + 1,
+  });
 
   if (!isReRecommendation) {
     sessionData.firstRecommendedMenu = currentRecommendedMenu.name;
@@ -207,15 +245,24 @@ function resetSession() {
   Object.keys(userAnswers).forEach((key) => {
     userAnswers[key] = null;
   });
+  sessionData.sessionId = createSessionId();
+  sessionData.startedAt = new Date().toISOString();
+  sessionData.recommendationVersion = RECOMMENDATION_VERSION;
+  sessionData.mealPeriod = getMealPeriod();
+  sessionData.recommendationHistory = [];
   sessionData.firstRecommendedMenu = null;
   sessionData.selectedMenu = null;
+  sessionData.acceptedFirstRecommendation = false;
   sessionData.reRecommendCount = 0;
   sessionData.feedback = null;
+  sessionData.feedbackReason = null;
+  sessionData.completed = false;
   sessionData.location = {
     latitude: null,
     longitude: null,
     accuracy: null,
   };
+  sessionSavePromise = Promise.resolve();
   currentRecommendedMenu = null;
   document.querySelector("#restaurant-search-message").hidden = true;
   document.querySelector("#restaurant-results").hidden = true;
@@ -231,6 +278,11 @@ function handleLocationSuccess(position) {
   const { latitude, longitude, accuracy } = position.coords;
 
   sessionData.location = { latitude, longitude, accuracy };
+  void trackSessionEvent("location_confirmed", {
+    latitude: Number(latitude.toFixed(3)),
+    longitude: Number(longitude.toFixed(3)),
+    accuracy,
+  });
 
   // 좌표는 개발 확인용으로만 화면에 표시하며 외부로 전송하지 않습니다.
   document.querySelector("#latitude-value").textContent = latitude.toFixed(6);
@@ -262,10 +314,78 @@ function requestCurrentLocation() {
   );
 }
 
-// 피드백 저장 부분은 추후 DB 저장 호출을 연결하기 쉽도록 분리했습니다.
+let sessionSavePromise = Promise.resolve();
+
+function buildSessionRecord() {
+  return {
+    session_id: sessionData.sessionId,
+    started_at: sessionData.startedAt,
+    recommendation_version: sessionData.recommendationVersion,
+    meal_period: sessionData.mealPeriod,
+    answers: { ...sessionData.answers },
+    recommendation_history: [...sessionData.recommendationHistory],
+    first_recommended_menu: sessionData.firstRecommendedMenu,
+    selected_menu: sessionData.selectedMenu,
+    accepted_first_recommendation: sessionData.acceptedFirstRecommendation,
+    re_recommend_count: sessionData.reRecommendCount,
+    feedback: sessionData.feedback,
+    feedback_reason: sessionData.feedbackReason,
+    completed: sessionData.completed,
+  };
+}
+
+async function saveSessionToDatabase() {
+  const client = await getSupabaseClientForDatabase();
+  if (!client) return false;
+
+  const { error } = await client
+    .from("recommendation_sessions")
+    .insert(buildSessionRecord());
+
+  if (error) {
+    console.error("추천 세션 저장 실패:", error);
+    return false;
+  }
+
+  return true;
+}
+
+async function trackSessionEvent(eventType, eventData = {}) {
+  await sessionSavePromise;
+  const client = await getSupabaseClientForDatabase();
+  if (!client) return false;
+
+  const { error } = await client.from("recommendation_events").insert({
+    session_id: sessionData.sessionId,
+    event_type: eventType,
+    event_data: eventData,
+  });
+
+  if (error) {
+    console.error("추천 이벤트 저장 실패:", error);
+    return false;
+  }
+
+  return true;
+}
+
+function completeFeedback(feedbackReason = null) {
+  sessionData.feedbackReason = feedbackReason;
+  sessionData.completed = true;
+  console.log("Current Session Data:", sessionData);
+  showConfirmedMenu();
+  sessionSavePromise = saveSessionToDatabase();
+}
+
 function saveFeedback(feedback) {
   sessionData.feedback = feedback;
-  console.log("Current Session Data:", sessionData);
+
+  if (feedback === "dislike") {
+    showScreen("feedbackReason");
+    return;
+  }
+
+  completeFeedback();
 }
 
 function showConfirmedMenu() {
@@ -312,6 +432,13 @@ function renderRestaurants(restaurants) {
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.textContent = "카카오맵에서 보기 →";
+    link.addEventListener("click", () => {
+      void trackSessionEvent("restaurant_clicked", {
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name,
+        distance: restaurant.distance,
+      });
+    });
 
     top.append(name, distance);
     item.append(top, address);
@@ -353,6 +480,9 @@ async function searchNearbyRestaurants() {
   });
 
   try {
+    void trackSessionEvent("restaurant_search_started", {
+      menu: sessionData.selectedMenu,
+    });
     const response = await fetch(`/api/restaurants?${params}`);
     const data = await response.json();
 
@@ -367,6 +497,10 @@ async function searchNearbyRestaurants() {
     }
 
     renderRestaurants(data.restaurants);
+    void trackSessionEvent("restaurant_results_viewed", {
+      menu: sessionData.selectedMenu,
+      resultCount: data.restaurants.length,
+    });
   } catch (error) {
     console.error("음식점 검색 실패:", error);
     message.textContent = "음식점 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.";
@@ -402,7 +536,14 @@ document.querySelector("#recommend-again-button").addEventListener("click", () =
 
 document.querySelector("#confirm-button").addEventListener("click", () => {
   sessionData.selectedMenu = currentRecommendedMenu.name;
+  sessionData.acceptedFirstRecommendation = sessionData.reRecommendCount === 0;
   showScreen("feedback");
+});
+
+document.querySelectorAll("[data-feedback-reason]").forEach((button) => {
+  button.addEventListener("click", () => {
+    completeFeedback(button.dataset.feedbackReason);
+  });
 });
 
 document.querySelectorAll("[data-feedback]").forEach((button) => {
