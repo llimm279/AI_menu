@@ -77,6 +77,7 @@ body {
 }
 
 .screen {
+  position: relative;
   width: min(100%, 680px);
   min-height: 440px;
   margin: 0 auto;
@@ -85,6 +86,21 @@ body {
   border-radius: 32px;
   background: var(--surface);
   text-align: center;
+}
+
+.back-button {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  min-height: 44px;
+  padding: 10px 14px;
+  color: var(--mute);
+  background: transparent;
+}
+
+.back-button:hover {
+  color: var(--ink);
+  background: var(--surface-card);
 }
 
 .screen[hidden],
@@ -357,7 +373,13 @@ a:focus-visible,
 
   .screen {
     min-height: 0;
-    padding: 40px 24px;
+    padding: 72px 24px 40px;
+  }
+
+  .back-button {
+    top: 16px;
+    left: 16px;
+    width: auto;
   }
 
   button {

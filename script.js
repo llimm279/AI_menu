@@ -183,6 +183,36 @@ function showScreen(screenName) {
   activeScreen.querySelector("h1, h2").focus();
 }
 
+function navigateBack(targetScreen, sourceScreen) {
+  if (targetScreen === "start") {
+    resetSession();
+  } else if (targetScreen === "hunger") {
+    userAnswers.hunger = null;
+    userAnswers.mood = null;
+    userAnswers.budget = null;
+  } else if (targetScreen === "mood") {
+    userAnswers.mood = null;
+    userAnswers.budget = null;
+  } else if (targetScreen === "budget") {
+    userAnswers.budget = null;
+    sessionData.recommendationHistory = [];
+    sessionData.firstRecommendedMenu = null;
+    sessionData.selectedMenu = null;
+    sessionData.acceptedFirstRecommendation = false;
+    sessionData.reRecommendCount = 0;
+    currentRecommendedMenu = null;
+  } else if (targetScreen === "result" && sourceScreen === "feedback-screen") {
+    sessionData.selectedMenu = null;
+    sessionData.feedback = null;
+    sessionData.feedbackReason = null;
+  } else if (targetScreen === "feedback") {
+    sessionData.feedback = null;
+    sessionData.feedbackReason = null;
+  }
+
+  showScreen(targetScreen);
+}
+
 function calculateMenuScore(menu, answers) {
   return Object.keys(scoreWeights).reduce((score, condition) => {
     const isMatch = menu[condition].includes(answers[condition]);
@@ -556,6 +586,13 @@ async function searchNearbyRestaurants() {
 
 document.querySelector("#start-button").addEventListener("click", () => {
   showScreen("hunger");
+});
+
+document.querySelectorAll("[data-back-to]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const sourceScreen = button.closest(".screen").id;
+    navigateBack(button.dataset.backTo, sourceScreen);
+  });
 });
 
 document.querySelectorAll("[data-answer]").forEach((button) => {
