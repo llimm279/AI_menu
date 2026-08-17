@@ -49,6 +49,7 @@ const userAnswers = {
 };
 
 const RECOMMENDATION_VERSION = "v1";
+const ALGORITHM_REVISION = "v2";
 
 function createSessionId() {
   if (globalThis.crypto?.randomUUID) {
@@ -189,8 +190,15 @@ function calculateMenuScore(menu, answers) {
   }, 0);
 }
 
-function recommendMenu(excludedMenuName = null) {
-  const candidates = menus.filter((menu) => menu.name !== excludedMenuName);
+function recommendMenu() {
+  const previouslyRecommendedMenus = new Set(
+    sessionData.recommendationHistory.map(({ menu }) => menu),
+  );
+  const unseenMenus = menus.filter(
+    (menu) => !previouslyRecommendedMenus.has(menu.name),
+  );
+  // 모든 메뉴를 확인한 극단적인 경우에만 전체 후보를 다시 사용합니다.
+  const candidates = unseenMenus.length > 0 ? unseenMenus : menus;
   const scoredMenus = candidates.map((menu) => ({
     menu,
     score: calculateMenuScore(menu, userAnswers),
@@ -220,14 +228,14 @@ function createRecommendationReason(menu) {
 }
 
 function displayRecommendation(isReRecommendation = false) {
-  const excludedName = currentRecommendedMenu?.name ?? null;
-  currentRecommendedMenu = recommendMenu(excludedName);
+  currentRecommendedMenu = recommendMenu();
   const recommendationScore = calculateMenuScore(currentRecommendedMenu, userAnswers);
 
   sessionData.recommendationHistory.push({
     menu: currentRecommendedMenu.name,
     score: recommendationScore,
     order: sessionData.recommendationHistory.length + 1,
+    algorithmRevision: ALGORITHM_REVISION,
     recommendedAt: new Date().toISOString(),
     feedback: null,
     feedbackReason: null,
@@ -517,6 +525,11 @@ async function searchNearbyRestaurants() {
     if (data.restaurants.length === 0) {
       message.textContent = "반경 5km 안에서 해당 메뉴를 판매하는 음식점을 찾지 못했어요.";
       message.hidden = false;
+      void trackSessionEvent("restaurant_results_viewed", {
+        menu: sessionData.selectedMenu,
+        resultCount: 0,
+        status: "empty",
+      });
       return;
     }
 
@@ -524,11 +537,17 @@ async function searchNearbyRestaurants() {
     void trackSessionEvent("restaurant_results_viewed", {
       menu: sessionData.selectedMenu,
       resultCount: data.restaurants.length,
+      status: "success",
     });
   } catch (error) {
     console.error("음식점 검색 실패:", error);
     message.textContent = "음식점 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.";
     message.hidden = false;
+    void trackSessionEvent("restaurant_results_viewed", {
+      menu: sessionData.selectedMenu,
+      resultCount: 0,
+      status: "error",
+    });
   } finally {
     button.disabled = false;
     button.textContent = "주변 음식점 다시 검색하기";
@@ -554,6 +573,12 @@ document.querySelectorAll("[data-answer]").forEach((button) => {
 });
 
 document.querySelector("#recommend-again-button").addEventListener("click", () => {
+  const latestRecommendation = sessionData.recommendationHistory.at(-1);
+  if (latestRecommendation && !latestRecommendation.feedback) {
+    latestRecommendation.feedback = "skip";
+    latestRecommendation.feedbackReason = "manual_reroll";
+  }
+
   sessionData.reRecommendCount += 1;
   displayRecommendation(true);
 });
